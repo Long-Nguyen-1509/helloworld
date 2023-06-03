@@ -9,17 +9,17 @@
 #include <poll.h>
 
 int main(int argc, char *argv[]) {
-    // Khai bao reciever
-    int reciever = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (reciever == -1)
+    // Khai bao receiver
+    int receiver = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (receiver == -1)
     {
         perror("socket() failed");
         return 1;
     }
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = htons(atoi(argv[3])); 
+    struct sockaddr_in raddr;
+    raddr.sin_family = AF_INET;
+    raddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    raddr.sin_port = htons(atoi(argv[3])); 
 
     // Khai bao sender
     int sender = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -29,12 +29,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct sockaddr_in dest_addr;
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(argv[1]);
-    addr.sin_port = htons(atoi(argv[2]));
+    struct sockaddr_in saddr;
+    saddr.sin_family = AF_INET;
+    saddr.sin_addr.s_addr = inet_addr(argv[1]);
+    saddr.sin_port = htons(atoi(argv[2]));
 
-    if (bind(reciever, (struct sockaddr *)&addr, sizeof(addr))) 
+    if (bind(receiver, (struct sockaddr *)&raddr, sizeof(raddr))) 
     {
         perror("bind() failed");
         return 1;
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     struct pollfd fds[2];
     
-    fds[0].fd = reciever;
+    fds[0].fd = receiver;
     fds[0].events = POLLIN;
 
     fds[1].fd = STDIN_FILENO;
@@ -58,27 +58,30 @@ int main(int argc, char *argv[]) {
             perror("poll() failed");
             break;
         }
+
         if (ret == 0)
         {
             printf("Timed out.\n");
             continue;
         }
 
-        if (fds[1].revents & POLLIN)
+        if (fds[0].revents & POLLIN)
         {
-            ret = recvfrom(reciever, buf, sizeof(buf), 0, NULL, NULL);
+            ret = recvfrom(receiver, buf, sizeof(buf), 0, NULL, NULL);
             if (ret <= 0)
             {
                 break;
             }
             buf[ret] = 0;
-            printf("Received: %s\n", buf);
+            printf("Received: %s", buf);
         }
 
         if (fds[1].revents & POLLIN)
         {
             fgets(buf, sizeof(buf), stdin);
-            sendto(sender, buf, strlen(buf), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+            sendto(sender, buf, strlen(buf), 0, (struct sockaddr *)&saddr, sizeof(saddr));
         }
     }
+
+    return 0; 
 }
