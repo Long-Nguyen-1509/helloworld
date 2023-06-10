@@ -37,6 +37,7 @@ int main()
 
     int num_processes = 8;
     for (int i = 0; i < num_processes; i++)
+    {
         if (fork() == 0)
         {
             char buf[256];
@@ -51,14 +52,14 @@ int main()
                 int ret = recv(client, buf, sizeof(buf), 0);
                 buf[ret] = 0;
                 puts(buf);
+
                 // Trả lại kết quả cho client
-                
                 char *msg = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Xin chao cac ban</h1></body></html>";
                 send(client, msg, strlen(msg), 0);
                 close(client);
             }
         }
-    
+    }
     getchar();
     close(listener);    
 

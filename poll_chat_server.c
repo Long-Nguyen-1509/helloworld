@@ -90,6 +90,7 @@ int main()
                     if (ret <= 0)
                     {
                         close(i);
+                        nfds--;
                     }
                     else
                     {
